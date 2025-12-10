@@ -1,0 +1,154 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+
+  position: relative;
+}
+
+.query {
+  width: 100%;
+  max-width: 36rem;
+
+  height: 33rem;
+  background-color: #ffffff;
+  padding: 1rem;
+}
+
+@media (min-width: 760px) and (max-width: 770px) {
+  .contact-name {
+    width: 100%;
+    max-width: 100%;
+  }
+  .contact-name5 {
+    width: 200%;
+    max-width: 155%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 992px) {
+  .query {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+  }
+
+  .phone-mail {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  .rounded-border {
+    height: 3rem;
+    width: 3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .query {
+    padding: 1rem;
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .col-12 {
+    text-align: center;
+  }
+
+  .form-group {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .form-control {
+    width: 100%;
+  }
+
+  button.button-btn {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.fully {
+  width: 100%;
+  height: 18rem;
+  background-color: #e5e5e8;
+  position: relative;
+  top: -10rem;
+}
+
+.lorem-contact {
+  letter-spacing: 1px;
+  word-spacing: 2px;
+}
+
+.lorem-contact1 {
+  letter-spacing: 1px;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 576px) {
+  .lorem-contact1 {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.list-contact ul li {
+  list-style: none;
+}
+
+.captcha-container {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+}
+
+.captcha-header {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.captcha-input {
+  width: 100%;
+  max-width: 90%;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.captcha-button {
+  padding: 0px 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 2.4rem;
+  margin-top: -0.5rem;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+
+.contact-phone {
+  font-size: 20px;
+}

@@ -1,0 +1,3526 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="description" content="eCommerce,shop,fashion" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <title></title>
+    <!-- <link
+      rel="shortcut icon"
+      href="assets/images/favicon.png"
+      type="image/png"
+    /> -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Aoboshi+One&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+      rel="stylesheet"
+    />
+    <!-- <link rel="stylesheet" href="assets/fonts/flaticon/flaticon_pesco.css" /> -->
+    <link rel="stylesheet" href="assets/fonts/fontawesome/css/all.min.css" />
+    <!--  <link
+      rel="stylesheet"
+      href="assets/vendor/bootstrap/css/bootstrap.min.css"
+    /> -->
+
+    <link rel="stylesheet" href="assets/vendor/slick/slick.css" />
+    <link
+      rel="stylesheet"
+      href="assets/vendor/nice-select/css/nice-select.css"
+    />
+    <!-- <link
+      rel="stylesheet"
+      href="assets/vendor/magnific-popup/dist/magnific-popup.css"
+    /> -->
+    <!-- <link rel="stylesheet" href="assets/vendor/jquery-ui/jquery-ui.min.css" /> -->
+
+    <link rel="stylesheet" href="assets/vendor/aos/aos.css" />
+    <link rel="stylesheet" href="assets/css/default.css" />
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <!-- <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"
+    /> -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        document
+          .querySelectorAll("a[href$='.html']:not(.lang-btn)")
+          .forEach((a) => {
+            const href = a.getAttribute("href");
+            const page = href.replace(/\.html$/, "");
+            if (page === "index" || page === "") {
+              a.setAttribute("href", "http://localhost:5173/");
+            } else {
+              a.setAttribute("href", `http://localhost:5173/${page}`);
+            }
+            a.addEventListener("click", (e) => {
+              e.preventDefault();
+              if (page === "index" || page === "") {
+                window.parent.location.href = "http://localhost:5173/";
+              } else {
+                window.parent.location.href = `http://localhost:5173/${page}`;
+              }
+            });
+          });
+        document.querySelectorAll('a[href="#"]').forEach((a) => {
+          a.addEventListener("click", (e) => e.preventDefault());
+        });
+      });
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        fetch("/api/themeoptionsdata")
+          .then((res) => {
+            if (!res.ok) throw new Error("Fetch failed");
+            return res.json();
+          })
+          .then((data) => {
+            let titleTag = document.head.querySelector("title");
+            if (!titleTag) {
+              titleTag = document.createElement("title");
+              document.head.appendChild(titleTag);
+            }
+            titleTag.textContent =
+              data.site_title || data.seo_title || "Website";
+
+            let desc = document.querySelector('meta[name="description"]');
+            if (!desc) {
+              desc = document.createElement("meta");
+              desc.name = "description";
+              document.head.appendChild(desc);
+            }
+            desc.content = data.seo_description || "";
+
+            let og = document.querySelector('meta[property="og:image"]');
+            if (!og) {
+              og = document.createElement("meta");
+              og.setAttribute("property", "og:image");
+              document.head.appendChild(og);
+            }
+            og.content = data.seo_og_image_url || "";
+
+            const url = `/api/${data.lazy_placeholder_image}?v=${Date.now()}`;
+            const oldIcon = document.querySelector(
+              'link[rel="icon"], link[rel="shortcut icon"]'
+            );
+            if (oldIcon) oldIcon.remove();
+
+            const link = document.createElement("link");
+            link.rel = "icon";
+            link.type = "image/png";
+            link.href = url;
+            document.head.appendChild(link);
+          })
+          .catch((e) => console.error("Theme load error:", e));
+      });
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        function makeAbsolute(u) {
+          if (!u) return u;
+          if (/^https?:\/\//i.test(u)) return u;
+          return window.location.origin + (u.startsWith("/") ? u : "/" + u);
+        }
+
+        function withUploads(u) {
+          if (!u) return u;
+          if (/^https?:\/\/demo\.webriefly\.com\/uploads\//i.test(u))
+            return makeAbsolute(u);
+          return makeAbsolute("/api/" + String(u).replace(/^\/+/, ""));
+        }
+
+        function toSlug(str = "") {
+          if (!str) return "";
+          let s = String(str);
+          try {
+            if (s.normalize)
+              s = s.normalize("NFKD").replace(/\p{Diacritic}/gu, "");
+          } catch (e) {}
+          s = s.replace(/&/g, "and");
+          s = s.toLowerCase().trim();
+          s = s.replace(/[^a-z0-9]+/g, "-");
+          s = s.replace(/-+/g, "-");
+          s = s.replace(/^-+|-+$/g, "");
+          return s;
+        }
+
+        function stripTags(str = "") {
+          return String(str || "").replace(/<[^>]*>/g, "");
+        }
+
+        Promise.all([
+          fetch("/api/productpagedata").then((r) => (r.ok ? r.json() : [])),
+          fetch("/api/blogpostdata").then((r) => (r.ok ? r.json() : [])),
+        ])
+          .then(([products, blogs]) => {
+            products = Array.isArray(products)
+              ? products
+              : (products && products.items) || [];
+            blogs = Array.isArray(blogs) ? blogs : (blogs && blogs.items) || [];
+
+            const featuredProducts = products.slice(0, 10);
+            const featuredBlogs = blogs.slice(0, 5);
+
+            const productSchema = featuredProducts.map((p) => {
+              const slug = p.slug
+                ? String(p.slug)
+                : toSlug(p.name || p.title || p.id || "");
+              const productUrl = makeAbsolute(`/shop-details/${slug}`);
+              return {
+                "@type": "Product",
+                name: p.name || p.title || "",
+                image: withUploads(p.image || (p.images && p.images[0]) || ""),
+                description: stripTags(p.description || ""),
+                brand: { "@type": "Brand", name: p.brand || "" },
+                sku: p.sku || p.id || "",
+                offers: {
+                  "@type": "Offer",
+                  url: productUrl,
+                  priceCurrency: p.currency || "USD",
+                  price:
+                    p.price_sale != null
+                      ? p.price_sale
+                      : p.price != null
+                      ? p.price
+                      : undefined,
+                  availability: p.stockstatus
+                    ? "https://schema.org/InStock"
+                    : "https://schema.org/OutOfStock",
+                },
+                aggregateRating:
+                  p.ratingCount || p.ratingValue
+                    ? {
+                        "@type": "AggregateRating",
+                        ratingValue: p.ratingValue || 4.5,
+                        bestRating: p.bestRating || 5,
+                        ratingCount: p.ratingCount || 0,
+                      }
+                    : undefined,
+              };
+            });
+
+            const blogSchema = featuredBlogs.map((b) => {
+              const headline = b.name || b.title || "";
+
+              let candidate = b.slug || "";
+              let cleanSlug = toSlug(candidate);
+
+              if (!cleanSlug || /^\d+$/.test(cleanSlug)) {
+                cleanSlug = toSlug(b.name || b.title || "");
+              }
+
+              if (!cleanSlug) {
+                const idPart = b.id
+                  ? String(b.id)
+                  : String(Math.floor(Math.random() * 1000000));
+                cleanSlug = "post-" + idPart;
+              }
+
+              const detailsUrl =
+                "http://localhost:5173/blog-details/" +
+                encodeURIComponent(cleanSlug);
+
+              return {
+                "@type": "BlogPosting",
+                headline: headline,
+                image: withUploads(b.image || ""),
+                description: stripTags(b.excerpt || b.description || ""),
+                url: detailsUrl,
+                datePublished:
+                  b.datePublished || b.published_at || b.date || undefined,
+                author: { "@type": "Person", name: b.author_name || "Admin" },
+              };
+            });
+
+            const schemaData = {
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "PESCO",
+                  url: window.location.origin + "/",
+                  logo: makeAbsolute("/Tonic.svg"),
+                  description:
+                    "PESCO is a leading eCommerce platform offering healthcare and wellness products.",
+                  contactPoint: {
+                    "@type": "ContactPoint",
+                    telephone: "+1-800-654-3210",
+                    contactType: "customer service",
+                    areaServed: "US",
+                    availableLanguage: "English",
+                  },
+                },
+                {
+                  "@type": "WebSite",
+                  name: "PESCO",
+                  url: window.location.origin + "/",
+                  description: "Shop the latest healthcare products at PESCO.",
+                  keywords:
+                    "PESCO, Ecommerce, healthcare, online pharmacy, wellness products",
+                },
+                {
+                  "@type": "LocalBusiness",
+                  name: "PESCO Healthcare Store",
+                  url: window.location.origin + "/",
+                  image: makeAbsolute("/Tonic.svg"),
+                  description:
+                    "PESCO's physical store provides healthcare and wellness products.",
+                  address: {
+                    "@type": "PostalAddress",
+                    streetAddress: "123 Healthcare Street",
+                    addressLocality: "New York",
+                    addressRegion: "NY",
+                    postalCode: "10001",
+                    addressCountry: "US",
+                  },
+                  telephone: "+1-800-654-3210",
+                  areaServed: "US",
+                },
+                ...productSchema,
+                ...blogSchema,
+              ].filter(Boolean),
+            };
+
+            const script = document.createElement("script");
+            script.type = "application/ld+json";
+            script.text = JSON.stringify(schemaData);
+            document.head.appendChild(script);
+          })
+          .catch((err) => {
+            console.error("Schema error", err);
+          });
+      });
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        function toSlug(str = "") {
+          if (!str) return "";
+          let s = String(str);
+          try {
+            if (s.normalize)
+              s = s.normalize("NFKD").replace(/\p{Diacritic}/gu, "");
+          } catch {}
+          s = s.replace(/&/g, "and");
+          s = s.toLowerCase().trim();
+          s = s.replace(/[^a-z0-9]+/g, "-");
+          s = s.replace(/-+/g, "-");
+          s = s.replace(/^-+|-+$/g, "");
+          return s;
+        }
+
+        const blogLinks = document.querySelectorAll('a[href^="/blog/"]');
+        blogLinks.forEach((a) => {
+          const match = a.getAttribute("href").match(/^\/blog\/(\d+)$/);
+          if (!match) return;
+          const blogId = match[1];
+
+          fetch(`/api/blogpostdata`)
+            .then((r) => r.json())
+            .then((data) => {
+              const blogs = Array.isArray(data) ? data : data.items || [];
+              const blog = blogs.find((b) => String(b.id) === blogId);
+              if (!blog) return;
+              const slug = toSlug(
+                blog.slug || blog.name || blog.title || `post-${blog.id}`
+              );
+              a.href = "/blog-details/" + slug;
+            })
+            .catch(console.error);
+        });
+      });
+    </script>
+  </head>
+
+  <style>
+    .deal-week img {
+      width: 775px;
+      height: 590px;
+    }
+
+    .simply-countdown {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+    }
+
+    .countdown-section {
+      text-align: center;
+      border: 2px solid #ddd;
+      border-radius: 50%;
+      width: 96px;
+      height: 94px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .countdown-amount {
+      font-size: 32px;
+      font-weight: 900;
+      color: #1e1e1e;
+    }
+    .countdown-label {
+      font-size: 14px;
+      margin-top: 2px;
+      color: #888;
+      font-weight: 900;
+    }
+
+    .product-thumbnail .cart-button {
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .product-thumbnail:hover .cart-button {
+      opacity: 1;
+    }
+
+    .category-img img {
+      width: 262px;
+      height: 250px;
+    }
+
+    .category-item.style-one.text-center {
+      margin-bottom: 20px;
+    }
+
+    .banner-img1 img {
+      width: 338px;
+      height: 357px;
+    }
+
+    .price-amount {
+      margin: 0;
+      font-size: 40px !important;
+      font-weight: 800 !important;
+      line-height: 2.5rem !important;
+    }
+
+    .feature-title {
+      font-size: 1.125rem !important;
+      line-height: 26px !important;
+    }
+
+    .feature-title1 {
+      font-size: 1.125rem !important;
+      line-height: 30px !important;
+    }
+
+    .title-name {
+      font-size: 16px !important;
+      line-height: 26px !important;
+    }
+
+    .banner-title {
+      font-size: 24px !important;
+      line-height: 36px;
+    }
+
+    .name-flash {
+      font-size: 24px !important;
+      line-height: 36px !important;
+      margin: 10px 0px !important;
+    }
+  </style>
+
+  <body>
+    <!--  <div class="preloader">
+      <div class="loader">
+        <img src="assets/images/loader.gif" alt="Image" loading="lazy" />
+      </div>
+    </div> -->
+    <!-- <div class="offcanvas__overlay"></div> -->
+
+    <div class="sidemenu-wrapper-cart">
+      <div class="sidemenu-content">
+        <div class="widget widget-shopping-cart">
+          <h4>My cart</h4>
+          <div class="sidemenu-cart-close"><i class="far fa-times"></i></div>
+          <div class="widget-shopping-cart-content">
+            <ul class="pesco-mini-cart-list"></ul>
+            <div class="cart-mini-total">
+              <div class="cart-total">
+                <span><strong>Subtotal:</strong></span>
+                <span class="amount"
+                  >1 × <span><span class="currency">$</span>00.00</span></span
+                >
+              </div>
+            </div>
+            <div class="cart-button-box">
+              <a href="checkout.html" class="theme-btn style-one"
+                >Proceed to checkout</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <header class="header-area">
+      <div class="search-header-main">
+        <div class="container">
+          <div class="search-header-inner">
+            <div class="site-branding">
+              <a href="index.html" class="brand-logo">
+                <img
+                  src="assets/images/logo/logo-main.png"
+                  alt="Logo"
+                  width="236"
+                  height="54"
+                  style="width: 157px; height: auto; display: block"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+
+            <div class="product-search-category">
+              <form action="#" role="search" aria-label="Product Search">
+                <label for="search-category" class="visually-hidden"
+                  >Select Category</label
+                >
+                <select id="search-category" class="wide">
+                  <option>All Categories</option>
+                  <option>Man Shirts</option>
+                  <option>Denim Jeans</option>
+                  <option>Casual Suit</option>
+                  <option>Summer Dress</option>
+                  <option>Sweaters</option>
+                  <option>Jackets</option>
+                </select>
+
+                <div class="form-group">
+                  <label for="search-products" class="visually-hidden"
+                    >Search Products</label
+                  >
+                  <input
+                    id="search-products"
+                    type="text"
+                    placeholder="Enter Search Products"
+                    required
+                    size="30"
+                  />
+
+                  <button
+                    class="search-btn"
+                    type="submit"
+                    aria-label="Search"
+                    style="min-width: 48px; min-height: 48px"
+                  >
+                    <i class="far fa-search" aria-hidden="true"></i>
+                    <span class="visually-hidden">Search</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="hotline-support item-rtl">
+              <div class="icon">
+                <i class="flaticon-support"></i>
+              </div>
+              <div class="info">
+                <span>24/7 Support</span>
+                <h5><a href="tel:+941234567894">+94 123 4567 894</a></h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="header-navigation style-one">
+        <div class="container">
+          <div class="primary-menu">
+            <div class="site-branding d-lg-none d-block">
+              <a href="index.html" class="brand-logo">
+                <img
+                  src="assets/images/logo/logo-main.png"
+                  alt="Logo"
+                  width="236"
+                  height="54"
+                  style="width: 157px; height: auto; display: block"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+
+            <div class="nav-inner-menu">
+              <div class="main-categories-wrap d-none d-lg-block">
+                <a class="categories-btn-active" href="/shops">
+                  <span class="fas fa-list"></span
+                  ><span class="text"
+                    >Products Category<i class="fas fa-angle-down"></i
+                  ></span>
+                </a>
+                <div
+                  class="categories-dropdown-wrap categories-dropdown-active"
+                >
+                  <div class="categori-dropdown-item">
+                    <ul>
+                      <li>
+                        <a href="shops.html">
+                          <img
+                            src="assets/images/icon/shirt.png"
+                            alt="Shirts"
+                            loading="lazy"
+                          />Man Shirts</a
+                        >
+                      </li>
+                      <li>
+                        <a href="shops.html">
+                          <img
+                            src="assets/images/icon/denim.png"
+                            alt="Jeans"
+                            loading="lazy"
+                          />Denim Jeans</a
+                        >
+                      </li>
+                      <li>
+                        <a href="shops.html">
+                          <img
+                            src="assets/images/icon/suit.png"
+                            alt="Suit"
+                            loading="lazy"
+                          />Casual Suit</a
+                        >
+                      </li>
+                      <li>
+                        <a href="shops.html">
+                          <img
+                            src="assets/images/icon/dress.png"
+                            alt="Dress"
+                            loading="lazy"
+                          />Summer Dress</a
+                        >
+                      </li>
+                      <li>
+                        <a href="shops.html">
+                          <img
+                            src="assets/images/icon/sweaters.png"
+                            alt="Sweaters"
+                            loading="lazy"
+                          />Sweaters</a
+                        >
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="more_slide_open">
+                    <div class="categori-dropdown-item">
+                      <ul>
+                        <li>
+                          <a href="shops.html"
+                            ><img
+                              src="assets/images/icon/jacket.png"
+                              alt="Jackets"
+                              loading="lazy"
+                            />Jackets</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="more_categories">
+                    <span class="icon"></span> <span>Show more...</span>
+                  </div>
+                </div>
+              </div>
+              <div class="pesco-nav-main">
+                <div class="pesco-nav-menu">
+                  <div class="nav-search mb-40 d-block d-lg-none">
+                    <div class="form-group">
+                      <input
+                        type="search"
+                        class="form_control"
+                        placeholder="Search Here"
+                        name="search"
+                      />
+                      <button class="search-btn" type="button">
+                        <i class="far fa-search" aria-hidden="true"></i>
+                        <span class="visually-hidden">Search</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="pesco-tabs style-three d-block d-lg-none">
+                    <ul
+                      class="nav nav-tabs mb-30"
+                      role="tablist"
+                      aria-label="Product Navigation Tabs"
+                    >
+                      <li role="presentation">
+                        <button
+                          class="nav-link active"
+                          id="tab-menu"
+                          data-bs-toggle="tab"
+                          data-bs-target="#nav1"
+                          type="button"
+                          role="tab"
+                          aria-controls="nav1"
+                          aria-selected="true"
+                        >
+                          Menu
+                        </button>
+                      </li>
+                      <li role="presentation">
+                        <button
+                          class="nav-link"
+                          id="tab-category"
+                          data-bs-toggle="tab"
+                          data-bs-target="#nav2"
+                          type="button"
+                          role="tab"
+                          aria-controls="nav2"
+                          aria-selected="false"
+                        >
+                          Category
+                        </button>
+                      </li>
+                    </ul>
+
+                    <div class="tab-content">
+                      <div class="tab-pane fade show active" id="nav1">
+                        <nav class="main-menu">
+                          <ul>
+                            <li class="menu-item has-children">
+                              <a href="index.html">Home</a>
+                              <ul class="sub-menu">
+                                <li><a href="index.html">Home 01</a></li>
+                                <li><a href="index-2.html">Home 02</a></li>
+                              </ul>
+                            </li>
+                            <li class="menu-item has-children">
+                              <a href="/shops-grid">Shop</a>
+                              <ul class="sub-menu">
+                                <li><a href="shops-grid.html">Shop Grid</a></li>
+                                <li>
+                                  <a href="shops.html">Shop left Sidebar</a>
+                                </li>
+                                <li>
+                                  <a href="shops-right-sidebar.html"
+                                    >Shop Right Sidebar</a
+                                  >
+                                </li>
+                                <li>
+                                  <a href="shop-details.html"
+                                    >Product Details</a
+                                  >
+                                </li>
+                                <li><a href="cart.html">Cart</a></li>
+                                <li><a href="checkout.html">Checkout</a></li>
+                                <li><a href="wishlists.html">Wishlist</a></li>
+                              </ul>
+                            </li>
+                            <li class="menu-item has-children">
+                              <a href="/blogs">Blog</a>
+                              <ul class="sub-menu">
+                                <li><a href="blogs.html">Our Blog</a></li>
+                                <li>
+                                  <a href="blog-details.html">Blog Details</a>
+                                </li>
+                              </ul>
+                            </li>
+                            <li class="menu-item has-children">
+                              <a href="/about-us">Pages</a>
+                              <ul class="sub-menu">
+                                <li><a href="about-us.html">About Us</a></li>
+                                <li><a href="faq.html">Faqs</a></li>
+                              </ul>
+                            </li>
+                            <li class="menu-item">
+                              <a href="contact.html">Contact</a>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                      <div class="tab-pane fade" id="nav2">
+                        <div class="categori-dropdown-item">
+                          <ul>
+                            <li>
+                              <a href="shops.html">
+                                <img
+                                  src="assets/images/icon/shirt.png"
+                                  alt="Shirts"
+                                  loading="lazy"
+                                />Man Shirts</a
+                              >
+                            </li>
+                            <li>
+                              <a href="shops.html">
+                                <img
+                                  src="assets/images/icon/denim.png"
+                                  alt="Jeans"
+                                  loading="lazy"
+                                />Denim Jeans</a
+                              >
+                            </li>
+                            <li>
+                              <a href="shops.html">
+                                <img
+                                  src="assets/images/icon/suit.png"
+                                  alt="Suit"
+                                  loading="lazy"
+                                />Casual Suit</a
+                              >
+                            </li>
+                            <li>
+                              <a href="shops.html">
+                                <img
+                                  src="assets/images/icon/dress.png"
+                                  alt="Dress"
+                                  loading="lazy"
+                                />Summer Dress</a
+                              >
+                            </li>
+                            <li>
+                              <a href="shops.html">
+                                <img
+                                  src="assets/images/icon/sweaters.png"
+                                  alt="Sweaters"
+                                  loading="lazy"
+                                />Sweaters</a
+                              >
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="hotline-support d-flex d-lg-none mt-30">
+                    <div class="icon">
+                      <i class="flaticon-support"></i>
+                    </div>
+                    <div class="info">
+                      <span>24/7 Support</span>
+                      <h5><a href="tel:+941234567894">+94 123 4567 894</a></h5>
+                    </div>
+                  </div>
+                  <nav class="main-menu d-none d-lg-block">
+                    <ul>
+                      <li class="menu-item has-children">
+                        <a href="index.html">Home</a>
+                        <ul class="sub-menu">
+                          <li><a href="index.html">Home 01</a></li>
+                          <li><a href="index-2.html">Home 02</a></li>
+                        </ul>
+                      </li>
+                      <li class="menu-item has-children">
+                        <a href="/shops-grid">Shop</a>
+                        <ul class="sub-menu">
+                          <li><a href="shops-grid.html">Shop Grid</a></li>
+                          <li><a href="shops.html">Shop left Sidebar</a></li>
+                          <li>
+                            <a href="shops-right-sidebar.html"
+                              >Shop Right Sidebar</a
+                            >
+                          </li>
+                          <li>
+                            <a href="shop-details.html">Product Details</a>
+                          </li>
+                          <li><a href="cart.html">Cart</a></li>
+                          <li><a href="checkout.html">Checkout</a></li>
+                          <li><a href="wishlists.html">Wishlist</a></li>
+                        </ul>
+                      </li>
+                      <li class="menu-item has-children">
+                        <a href="/blogs">Blog</a>
+                        <ul class="sub-menu">
+                          <li><a href="blogs.html">Our Blog</a></li>
+                          <li><a href="blog-details.html">Blog Details</a></li>
+                        </ul>
+                      </li>
+                      <li class="menu-item has-children">
+                        <a href="/about-us">Pages</a>
+                        <ul class="sub-menu">
+                          <li><a href="about-us.html">About Us</a></li>
+                          <li><a href="faq.html">Faqs</a></li>
+                        </ul>
+                      </li>
+                      <li class="menu-item">
+                        <a href="contact.html">Contact</a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+            <div class="nav-right-item style-one">
+              <ul>
+                <li>
+                  <div class="deals d-lg-block d-none">
+                    <i class="far fa-fire-alt"></i>
+                    <span class="visually-hidden">Deal</span>
+                  </div>
+                </li>
+                <li>
+                  <a href="wishlists.html" aria-label="View Wishlist">
+                    <div class="wishlist-btn d-lg-block d-none">
+                      <i class="far fa-heart" aria-hidden="true"></i>
+                      <span class="pro-count" id="pro-counts1">00</span>
+                      <span class="visually-hidden">Wishlist</span>
+                    </div>
+                  </a>
+                </li>
+
+                <li>
+                  <div class="cart-button d-flex align-items-center">
+                    <a href="cart.html" aria-label="View Cart">
+                      <div class="icon">
+                        <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+                        <span class="pro-count" id="pro-counts">00</span>
+                        <span class="visually-hidden">Cart</span>
+                      </div>
+                    </a>
+                  </div>
+                </li>
+              </ul>
+              <div class="navbar-toggler d-block d-lg-none">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-bg">
+      <section class="hero-section">
+        <div class="hero-wrapper-one">
+          <div class="container">
+            <div class="hero-dots"></div>
+            <div class="hero-slider-one">
+              <div class="single-hero-slider">
+                <div class="row align-items-center">
+                  <div class="col-lg-6">
+                    <div class="hero-content style-one mb-50">
+                      <span class="sub-heading">Best for your categories</span>
+                      <h1>
+                        Exclusive Collection <br />
+                        in <span>Our Online</span> Store
+                      </h1>
+                      <p>
+                        Discover our exclusive collection available only in our
+                        online store. Shop now for unique and premium items that
+                        you won't find anywhere else.
+                      </p>
+                      <ul>
+                        <li>
+                          <div class="price-box">
+                            <div class="currency">$</div>
+                            <div class="text">
+                              <span class="discount">Discount Price</span>
+                              <h2 class="price-amount">140.00</h2>
+                            </div>
+                          </div>
+                        </li>
+                        <li>
+                          <img
+                            src="assets/images/hero/line-1.png"
+                            alt="Image"
+                            loading="lazy"
+                          />
+                        </li>
+                        <li>
+                          <a href="shops.html" class="theme-btn style-one"
+                            >Shop Now</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="hero-image-box">
+                      <div class="hero-image">
+                        <img
+                          src="https://avatars.mds.yandex.net/i?id=07a62907c914895af835c42858d22addc8b9abd7-5611890-images-thumbs&n=13"
+                          alt="Hero Image"
+                          style="width: 460px; height: 550px"
+                          loading="lazy"
+                          fetchpriority="high"
+                        />
+                        <div
+                          class="hero-shape bg_cover"
+                          style="
+                            background-image: url(assets/images/hero/hero-one-shape1.png);
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="single-hero-slider">
+                <div class="row align-items-center">
+                  <div class="col-lg-6">
+                    <div class="hero-content style-one mb-50">
+                      <span class="sub-heading">Best for your categories</span>
+                      <h1>
+                        Exclusive Collection <br />
+                        in <span>Our Online</span> Store
+                      </h1>
+                      <p>
+                        Discover our exclusive collection available only in our
+                        online store. Shop now for unique and premium items that
+                        you won't find anywhere else.
+                      </p>
+                      <ul>
+                        <li>
+                          <div class="price-box">
+                            <div class="currency">$</div>
+                            <div class="text">
+                              <span class="discount">Discount Price</span>
+                              <h2 class="price-amount">140.00</h2>
+                            </div>
+                          </div>
+                        </li>
+                        <li>
+                          <img
+                            src="assets/images/hero/line-1.png"
+                            alt="Image"
+                            loading="lazy"
+                          />
+                        </li>
+                        <li>
+                          <a href="shops.html" class="theme-btn style-one"
+                            >Shop Now</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="hero-image-box">
+                      <div class="hero-image">
+                        <img
+                          src="https://avatars.mds.yandex.net/i?id=1a9aed14f46f993bbb117471924bf8973e38019d-5235524-images-thumbs&n=13"
+                          alt="Hero Image"
+                          style="width: 460px; height: 550px"
+                          loading="lazy"
+                          fetchpriority="high"
+                        />
+                        <div
+                          class="hero-shape bg_cover"
+                          style="
+                            background-image: url(assets/images/hero/hero-one-shape1.png);
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="single-hero-slider">
+                <div class="row align-items-center">
+                  <div class="col-lg-6">
+                    <div class="hero-content style-one mb-50">
+                      <span class="sub-heading">Best for your categories</span>
+                      <h1>
+                        Exclusive Collection <br />
+                        in <span>Our Online</span> Store
+                      </h1>
+                      <p>
+                        Discover our exclusive collection available only in our
+                        online store. Shop now for unique and premium items that
+                        you won't find anywhere else.
+                      </p>
+                      <ul>
+                        <li>
+                          <div class="price-box">
+                            <div class="currency">$</div>
+                            <div class="text">
+                              <span class="discount">Discount Price</span>
+                              <h2 class="price-amount">140.00</h2>
+                            </div>
+                          </div>
+                        </li>
+                        <li>
+                          <img
+                            src="assets/images/hero/line-1.png"
+                            alt="Image"
+                            loading="lazy"
+                          />
+                        </li>
+                        <li>
+                          <a href="shops.html" class="theme-btn style-one"
+                            >Shop Now</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <div class="hero-image-box">
+                      <div class="hero-image">
+                        <img
+                          src="https://avatars.mds.yandex.net/i?id=62ab96b1b3e353cb70232e304a225d4feab48b5f-16455012-images-thumbs&n=13"
+                          alt="Hero Image"
+                          style="width: 460px; height: 550px"
+                          loading="lazy"
+                          fetchpriority="high"
+                        />
+                        <div
+                          class="hero-shape bg_cover"
+                          style="
+                            background-image: url(assets/images/hero/hero-one-shape1.png);
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="animated-headline-area primary-dark-bg pt-25 pb-25">
+        <div class="headline-wrap style-one">
+          <span class="marquee-wrap">
+            <span class="marquee-inner left">
+              <span class="marquee-item"
+                ><b>Women</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Shirts</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jackets</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jeans</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Blazer</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Men</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jackets</b><i class="fas fa-bahai"></i
+              ></span>
+            </span>
+            <span class="marquee-inner left">
+              <span class="marquee-item"
+                ><b>Women</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Shirts</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jackets</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jeans</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Blazer</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Men</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jackets</b><i class="fas fa-bahai"></i
+              ></span>
+            </span>
+            <span class="marquee-inner left">
+              <span class="marquee-item"
+                ><b>Women</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Shirts</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jackets</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jeans</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Blazer</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Men</b><i class="fas fa-bahai"></i
+              ></span>
+              <span class="marquee-item"
+                ><b>Jackets</b><i class="fas fa-bahai"></i
+              ></span>
+            </span>
+          </span>
+        </div>
+      </section>
+
+      <section
+        class="features-section pt-130"
+        aria-labelledby="features-section-title"
+      >
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12">
+              <div
+                class="features-wrapper"
+                data-aos="fade-up"
+                data-aos-delay="10"
+                data-aos-duration="1000"
+              >
+                <h2 id="features-section-title" class="sr-only">
+                  Our Features
+                </h2>
+
+                <div class="iconic-box-item icon-left-box mb-25">
+                  <div class="icon" aria-hidden="true">
+                    <i class="fas fa-shipping-fast"></i>
+                  </div>
+                  <div class="content">
+                    <h3 class="feature-title">Free Shipping</h3>
+                    <p>You get your items delivered without any extra cost.</p>
+                  </div>
+                </div>
+
+                <div class="divider mb-25">
+                  <img
+                    src="assets/images/divider.png"
+                    alt="Image"
+                    role="presentation"
+                    loading="lazy"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div class="iconic-box-item icon-left-box mb-25">
+                  <div class="icon" aria-hidden="true">
+                    <i class="fas fa-microphone"></i>
+                  </div>
+                  <div class="content">
+                    <h3 class="feature-title">Great Support 24/7</h3>
+                    <p>
+                      Our customer support team is available around the clock
+                    </p>
+                  </div>
+                </div>
+
+                <div class="divider mb-25">
+                  <img
+                    src="assets/images/divider.png"
+                    alt="Image"
+                    role="presentation"
+                    loading="lazy"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div class="iconic-box-item icon-left-box mb-25">
+                  <div class="icon" aria-hidden="true">
+                    <i class="far fa-handshake"></i>
+                  </div>
+                  <div class="content">
+                    <h3 class="feature-title">Return Available</h3>
+                    <p>
+                      Making it easy to return any items if you're not
+                      satisfied.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="divider mb-25">
+                  <img
+                    src="assets/images/divider.png"
+                    alt="Image"
+                    loading="lazy"
+                    role="presentation"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div class="iconic-box-item icon-left-box mb-25">
+                  <div class="icon" aria-hidden="true">
+                    <i class="fas fa-sack-dollar"></i>
+                  </div>
+                  <div class="content">
+                    <h3 class="feature-title">Secure Payment</h3>
+                    <p>Shop with confidence knowing that our secure payment</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="category-section pt-125 overflow-hidden">
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-lg-6 col-md-8">
+              <div
+                class="section-title mb-50"
+                data-aos="fade-right"
+                data-aos-delay="10"
+                data-aos-duration="800"
+              >
+                <div class="sub-heading d-inline-flex align-items-center">
+                  <i class="flaticon-sparkler"></i>
+                  <span class="sub-title">Categories</span>
+                </div>
+                <h2>Browse Top Category</h2>
+              </div>
+            </div>
+            <div class="col-lg-6 col-md-4">
+              <div
+                class="category-arrows style-one mb-60"
+                data-aos="fade-left"
+                data-aos-delay="15"
+                data-aos-duration="1000"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="category-slider-one"
+          data-aos="fade-up"
+          data-aos-delay="20"
+          data-aos-duration="1200"
+        ></div>
+      </section>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const BASE_IMAGE_URL = "/api/uploads/";
+          const sliderContainer = document.querySelector(
+            ".category-slider-one"
+          );
+          if (!sliderContainer) return;
+          function createCategoryItem(item) {
+            const wrap = document.createElement("div");
+            wrap.className = "category-item style-one text-center";
+            const imgWrap = document.createElement("div");
+            imgWrap.className = "category-img";
+            const img = document.createElement("img");
+            img.alt = item.name || "category image";
+            img.src = item.image
+              ? BASE_IMAGE_URL + item.image
+              : BASE_IMAGE_URL + "default.png";
+            imgWrap.appendChild(img);
+            const content = document.createElement("div");
+            content.className = "category-content";
+            const link = document.createElement("a");
+            link.className = "category-btn";
+            link.href = "/shop";
+            link.textContent = item.name || "Category";
+            content.appendChild(link);
+            wrap.appendChild(imgWrap);
+            wrap.appendChild(content);
+            return wrap;
+          }
+          fetch("/api/productcatdata")
+            .then(function (res) {
+              if (!res.ok) throw new Error("Network response was not ok");
+              return res.json();
+            })
+            .then(function (data) {
+              if (!Array.isArray(data)) return;
+              sliderContainer.innerHTML = "";
+              const categories = data.filter((c) => {
+                const published =
+                  String(c.status || "").toLowerCase() === "published";
+                const featured =
+                  String(c.is_featured || "").toLowerCase() === "yes";
+                return published && featured;
+              });
+              const toRender = categories.length
+                ? categories
+                : data.filter(
+                    (c) => String(c.status || "").toLowerCase() === "published"
+                  );
+              toRender.forEach(function (cat) {
+                sliderContainer.appendChild(createCategoryItem(cat));
+              });
+              try {
+                if (typeof initCategorySlider === "function") {
+                  initCategorySlider();
+                } else if (
+                  window.jQuery &&
+                  typeof jQuery === "function" &&
+                  jQuery.fn &&
+                  jQuery.fn.slick
+                ) {
+                  const $el = jQuery(".category-slider-one");
+                  if ($el.hasClass("slick-initialized")) {
+                    $el.slick("refresh");
+                  } else {
+                    $el.slick();
+                  }
+                } else if (window.Swiper && sliderContainer.swiper) {
+                  sliderContainer.swiper.update();
+                }
+              } catch (err) {
+                console.warn("Could not auto-refresh slider:", err);
+              }
+            })
+            .catch(function (err) {
+              console.error("Failed to load category data:", err);
+            });
+        });
+      </script>
+
+      <section class="banner-section pt-130">
+        <div class="container">
+          <div class="row" id="flash-row">
+            <div class="col-lg-6 banner-flashes">
+              <div
+                class="banner-item style-one bg-one mb-40"
+                data-aos="fade-up"
+                data-aos-delay="10"
+                data-aos-duration="900"
+              >
+                <div class="shape shape-one">
+                  <span
+                    ><img
+                      src="assets/images/banner/discount.png"
+                      alt="shape"
+                      loading="lazy"
+                  /></span>
+                </div>
+                <div class="shape shape-two">
+                  <span
+                    ><img
+                      src="assets/images/banner/line.png"
+                      alt="shape"
+                      loading="lazy"
+                  /></span>
+                </div>
+                <div class="banner-img banner-img1">
+                  <img src="" alt="Image" loading="lazy" />
+                </div>
+                <div class="banner-content">
+                  <span>UP TO <span class="off"></span></span>
+                  <h3 class="name-flash"></h3>
+                  <a href="shops.html" class="theme-btn style-one">Shop Now</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+          const row = document.getElementById("flash-row");
+          const template = row.querySelector(".banner-flashes");
+          let sales;
+
+          try {
+            const res = await fetch("/api/flashsalesmaindata");
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            sales = await res.json();
+          } catch (err) {
+            console.error(err);
+            row.innerHTML =
+              '<div class="col-12 text-center"><p>No offers available.</p></div>';
+          }
+
+          if (Array.isArray(sales)) {
+            const today = new Date();
+            const valid = sales.filter((item) => {
+              const end = new Date(item.end_date + "T23:59:59");
+              return end >= today;
+            });
+
+            if (valid.length === 0) {
+              row.innerHTML =
+                '<div class="col-12 text-center"><p>No offers available.</p></div>';
+            } else {
+              row.innerHTML = "";
+              valid.slice(0, 2).forEach((item, idx) => {
+                const slotWrapper = document.createElement("div");
+                slotWrapper.innerHTML = template.outerHTML;
+                const slot = slotWrapper.firstElementChild;
+
+                const bannerItem = slot.querySelector(".banner-item");
+                if (idx === 0) {
+                  bannerItem.classList.replace("bg-two", "bg-one");
+                  bannerItem.setAttribute("data-aos-delay", "10");
+                  bannerItem.setAttribute("data-aos-duration", "900");
+                } else {
+                  bannerItem.classList.replace("bg-one", "bg-two");
+                  bannerItem.setAttribute("data-aos-delay", "20");
+                  bannerItem.setAttribute("data-aos-duration", "1100");
+                }
+
+                const imgEl = slot.querySelector(".banner-img img");
+                imgEl.src = `/api/uploads/${item.image}`;
+                imgEl.alt = item.product_name;
+
+                const orig = parseFloat(item.price.replace(/[^0-9.]/g, ""));
+                const sale = parseFloat(
+                  item.price_sale.replace(/[^0-9.]/g, "")
+                );
+                const pct = Math.round(((orig - sale) / orig) * 100);
+
+                slot.querySelector(".off").textContent = pct + "%";
+                slot.querySelector("h3").textContent = item.product_name;
+
+                row.appendChild(slot);
+              });
+            }
+          }
+
+          if (window.AOS) AOS.refresh();
+
+          const section = document.getElementById("best-deal");
+          let sale;
+
+          try {
+            const res = await fetch("/api/flashsalesmaindata");
+            if (!res.ok) throw new Error("Network error");
+            const data = await res.json();
+
+            if (!Array.isArray(data) || data.length === 0) {
+              section.innerHTML = `
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 text-center py-5">
+              <h3>No offers available.</h3>
+            </div>
+          </div>
+        </div>`;
+              if (window.AOS) AOS.refresh();
+              return;
+            }
+            sale = data[0];
+          } catch (err) {
+            console.error(err);
+            section.innerHTML = `
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12 text-center py-5">
+            <h3>No offers available.</h3>
+          </div>
+        </div>
+      </div>`;
+            if (window.AOS) AOS.refresh();
+            return;
+          }
+
+          const imgEl2 = document.querySelector(".deal-img img");
+          imgEl2.src = `/api/uploads/${sale.image}`;
+          imgEl2.alt = sale.product_name;
+
+          const subHeading = document.querySelector(
+            ".deal-content .sub-heading"
+          );
+          subHeading.innerHTML = `<i class="fas fa-tags"></i> Deal of the ${sale.name}`;
+
+          const countdownEl = document.getElementById("flashsale-countdown");
+          const endDate = new Date(sale.end_date + "T23:59:59");
+          let interval;
+
+          function updateCountdown() {
+            const diff = endDate - new Date();
+            if (diff < 0) {
+              section.innerHTML = `
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 text-center py-5">
+              <h3>No offers available.</h3>
+            </div>
+          </div>
+        </div>`;
+              clearInterval(interval);
+              return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((diff / (1000 * 60)) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+
+            countdownEl.innerHTML = `
+      <div class="countdown-section">
+        <span class="countdown-amount">${days}</span>
+        <span class="countdown-label">day</span>
+      </div>
+      <div class="countdown-section">
+        <span class="countdown-amount">${hours}</span>
+        <span class="countdown-label">hour</span>
+      </div>
+      <div class="countdown-section">
+        <span class="countdown-amount">${minutes}</span>
+        <span class="countdown-label">minute</span>
+      </div>
+      <div class="countdown-section">
+        <span class="countdown-amount">${seconds}</span>
+        <span class="countdown-label">second</span>
+      </div>`;
+
+            if (window.AOS) AOS.refresh();
+          }
+
+          updateCountdown();
+          interval = setInterval(updateCountdown, 1000);
+        });
+      </script>
+
+      <section class="features-products pt-90">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-6">
+              <div
+                class="section-title mb-50 text-center text-lg-start"
+                data-aos="fade-right"
+                data-aos-delay="10"
+                data-aos-duration="1000"
+              >
+                <div class="sub-heading d-inline-flex align-items-center">
+                  <i class="flaticon-sparkler"></i>
+                  <span class="sub-title">Feature Products</span>
+                </div>
+                <h2>Our Features Collection</h2>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <div
+                class="pesco-tabs style-one mb-50"
+                data-aos="fade-left"
+                data-aos-delay="15"
+                data-aos-duration="1200"
+              >
+                <ul class="nav nav-tabs" role="tablist">
+                  <li role="presentation">
+                    <button
+                      class="nav-link active"
+                      id="tab-best-sellers"
+                      data-bs-toggle="tab"
+                      data-bs-target="#cat1"
+                      type="button"
+                      role="tab"
+                      aria-controls="cat1"
+                      aria-selected="true"
+                    >
+                      Best Sellers
+                    </button>
+                  </li>
+                  <li role="presentation">
+                    <button
+                      class="nav-link"
+                      id="tab-new-products"
+                      data-bs-toggle="tab"
+                      data-bs-target="#cat2"
+                      type="button"
+                      role="tab"
+                      aria-controls="cat2"
+                      aria-selected="false"
+                    >
+                      New Products
+                    </button>
+                  </li>
+                  <li role="presentation">
+                    <button
+                      class="nav-link"
+                      id="tab-sale-products"
+                      data-bs-toggle="tab"
+                      data-bs-target="#cat3"
+                      type="button"
+                      role="tab"
+                      aria-controls="cat3"
+                      aria-selected="false"
+                    >
+                      Sale Products
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12">
+              <div
+                class="tab-content"
+                data-aos="fade-up"
+                data-aos-duration="1200"
+              >
+                <div class="tab-pane fade show active" id="cat1">
+                  <div class="row justify-content-center"></div>
+                </div>
+
+                <div class="tab-pane fade" id="cat2">
+                  <div class="row justify-content-center"></div>
+                </div>
+
+                <div class="tab-pane fade" id="cat3">
+                  <div class="row justify-content-center"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const listEl = document.querySelector(".pesco-mini-cart-list");
+          const badgeEl = document.querySelector("#pro-counts");
+          const wishlistEl = document.querySelector("#pro-counts1");
+          const subtotalEl = document.querySelector(".cart-mini-total .amount");
+
+          function showBanner(msg, type = "success") {
+            const b = document.createElement("div");
+            b.className = `banner ${type}`;
+            b.textContent = msg;
+            Object.assign(b.style, {
+              position: "fixed",
+              top: "10px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              padding: "10px 20px",
+              background: type === "success" ? "#4caf50" : "#f44336",
+              color: "#fff",
+              borderRadius: "4px",
+              zIndex: 9999,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            });
+            document.body.appendChild(b);
+            setTimeout(() => b.remove(), 3000);
+          }
+
+          function makeSlug(name = "product") {
+            return String(name)
+              .toLowerCase()
+              .replace(/\s+/g, "-")
+              .replace(/[^\w-]+/g, "");
+          }
+
+          async function fetchWithRetries(
+            url,
+            opts = {},
+            maxRetries = 4,
+            baseDelay = 300
+          ) {
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+              try {
+                const cacheBust = `_=${Date.now()}`;
+                const sep = url.includes("?") ? "&" : "?";
+                const res = await fetch(url + sep + cacheBust, opts);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const text = await res.text();
+                try {
+                  return JSON.parse(text);
+                } catch {
+                  throw new Error("Invalid JSON: " + text.slice(0, 200));
+                }
+              } catch (err) {
+                console.debug(
+                  `fetchWithRetries attempt ${attempt} failed:`,
+                  err.message || err
+                );
+                if (attempt === maxRetries) throw err;
+                await new Promise((r) =>
+                  setTimeout(r, baseDelay * Math.pow(2, attempt))
+                );
+              }
+            }
+          }
+
+          function ensureRow(catSelector) {
+            let row = document.querySelector(
+              catSelector + " .row.justify-content-center"
+            );
+            if (!row) {
+              const cat = document.querySelector(catSelector);
+              if (cat) {
+                row = document.createElement("div");
+                row.className = "row justify-content-center";
+                cat.appendChild(row);
+              }
+            }
+            return row;
+          }
+
+          function makeCard(p) {
+            const price =
+              parseFloat(
+                String(p.price || p.price_sale || 0).replace(/[^0-9.]/g, "")
+              ) || 0;
+            const sale =
+              parseFloat(String(p.price_sale || 0).replace(/[^0-9.]/g, "")) ||
+              0;
+            const slug = makeSlug(p.name);
+
+            const col = document.createElement("div");
+            col.className = "col-xl-3 col-lg-4 col-sm-6";
+            col.innerHTML = `
+      <div class="product-item style-one mb-40" data-aos="fade-up">
+        <div class="product-thumbnail">
+          
+          <a href="/shop-details/${slug}" class="w-100 h-100" aria-label="View details of ${
+              p.name
+            }">
+            <img loading="lazy" src="/api/uploads/${p.image || ""}" alt="${
+              p.name || ""
+            }" loading="lazy">
+          </a>
+
+          <div class="discount">${p.label || ""}</div>
+          <div class="hover-content">
+            <a href="/shop-details/${slug}" class="icon-btn add-to-wishlist"
+              aria-label="Add ${p.name} to wishlist"
+              data-name="${(p.name || "").replace(/"/g, "")}" 
+              data-store="${(p.store || "").replace(/"/g, "")}" 
+              data-image="${(p.image || "").replace(/"/g, "")}" 
+              data-price="${price}" 
+              data-price_sale="${sale}" 
+              data-sku="${(p.sku || "").replace(/"/g, "")}" 
+              data-stockstatus="${(p.stockstatus || "").replace(/"/g, "")}">
+              <i class="fa fa-heart"></i>
+            </a>
+
+            
+            <a href="/shop-details/${slug}" class="img-popup icon-btn" aria-label="Quick view of ${
+              p.name
+            }">
+              <i class="fa fa-eye"></i>
+            </a>
+          </div>
+
+          <div class="cart-button">
+            <a href="/shop-details/${slug}" class="cart-btn add-to-cart" aria-label="Add ${
+              p.name
+            } to cart"
+              data-name="${(p.name || "").replace(/"/g, "")}" 
+              data-store="${(p.store || "").replace(/"/g, "")}" 
+              data-image="${(p.image || "").replace(/"/g, "")}" 
+              data-price="${price}" 
+              data-price_sale="${sale}" 
+              data-quantity="1">
+              <i class="far fa-shopping-basket"></i>
+              <span class="text">Add To Cart</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="product-info-wrap">
+          <div class="product-info">
+            <ul class="ratings rating5">
+              ${'<li><i class="fas fa-star"></i></li>'.repeat(5)}
+              <li><a href="/shop-details/${slug}" aria-label="View ${
+              p.name
+            } reviews">(${Math.floor(Math.random() * 100)})</a></li>
+            </ul>
+            <h3 class="title title-name">
+              <a href="/shop-details/${slug}" aria-label="View details of ${
+              p.name
+            }">${(p.name || "").replace(/</g, "")}</a>
+            </h3>
+          </div>
+          <div class="product-price">
+            <span class="price prev-price"><span class="currency"></span>$${sale.toFixed(
+              2
+            )}</span>
+            <span class="price new-price"><span class="currency"></span>$${price.toFixed(
+              2
+            )}</span>
+          </div>
+        </div>
+      </div>`;
+            return col;
+          }
+
+          let productsRendered = false;
+          let renderInProgress = false;
+
+          async function loadFeatureProducts() {
+            if (renderInProgress) return;
+            renderInProgress = true;
+
+            const bestRow = ensureRow("#cat1");
+            const newRow = ensureRow("#cat2");
+            const saleRow = ensureRow("#cat3");
+
+            if (bestRow) bestRow.innerHTML = "";
+            if (newRow) newRow.innerHTML = "";
+            if (saleRow) saleRow.innerHTML = "";
+
+            try {
+              const products = await fetchWithRetries(
+                "/api/productpagedata",
+                {},
+                5,
+                300
+              );
+              if (!Array.isArray(products) || products.length === 0) {
+                renderInProgress = false;
+                return;
+              }
+
+              products.forEach((p) => {
+                const target =
+                  (p.label === "Sale" && saleRow) ||
+                  (p.label === "New" && newRow) ||
+                  bestRow;
+                if (target) target.appendChild(makeCard(p));
+              });
+
+              productsRendered = true;
+              if (typeof AOS !== "undefined") AOS.refresh();
+            } catch (err) {
+              console.error("Failed to load products:", err.message || err);
+            } finally {
+              renderInProgress = false;
+            }
+          }
+
+          async function loadSidebarCart() {
+            try {
+              const items = await fetchWithRetries(
+                "/api/allcartdata",
+                {},
+                3,
+                200
+              );
+              const seen = new Set();
+              const unique = (items || []).filter((i) => {
+                if (seen.has(i.name)) return false;
+                seen.add(i.name);
+                return true;
+              });
+
+              if (!listEl) return;
+              listEl.innerHTML = "";
+              if (!unique.length) {
+                listEl.innerHTML = `<li class="sidebar-cart-item sidebar-cart-empty">Your cart is empty.</li>`;
+                if (subtotalEl) subtotalEl.textContent = "$0.00";
+                return;
+              }
+
+              let total = 0;
+              unique.forEach((item) => {
+                const price = parseFloat(item.price_sale) || 0;
+                const qty = parseInt(item.quantity || 1, 10);
+                total += price * qty;
+                const slug = makeSlug(item.name);
+                listEl.insertAdjacentHTML(
+                  "beforeend",
+                  `<li class="sidebar-cart-item" data-id="${
+                    item.id
+                  }" data-price="${price}" data-qty="${qty}">
+            <a href="/shop-details/${slug}" class="remove-cart" aria-label="Remove ${
+                    item.name
+                  } from cart">
+              <i class="far fa-trash-alt"></i>
+            </a>
+            <a href="/shop-details/${slug}" aria-label="View details of ${
+                    item.name
+                  }">
+              <img loading="lazy" src="/api/uploads/${item.image}" alt="${
+                    item.name
+                  }"/>
+              ${item.name}
+              
+            </a>
+            <span class="quantity">
+              ${qty} × <span><span class="currency">$</span>${price.toFixed(
+                    2
+                  )}</span>
+            </span>
+          </li>`
+                );
+              });
+
+              if (subtotalEl) subtotalEl.textContent = `$${total.toFixed(2)}`;
+            } catch (err) {
+              console.error("Sidebar load error:", err);
+            }
+          }
+
+          async function updateCounts() {
+            try {
+              const items = await fetchWithRetries(
+                "/api/allcartdata",
+                {},
+                3,
+                200
+              );
+              const seen = new Set();
+              const unique = (items || []).filter((i) => {
+                if (seen.has(i.name)) return false;
+                seen.add(i.name);
+                return true;
+              });
+              if (badgeEl)
+                badgeEl.textContent = String(unique.length).padStart(2, "0");
+            } catch {
+              if (badgeEl) badgeEl.textContent = "00";
+            }
+
+            try {
+              const items2 = await fetchWithRetries(
+                "/api/wishlistdata",
+                {},
+                3,
+                200
+              );
+              const seen2 = new Set();
+              const unique2 = (items2 || []).filter((i) => {
+                if (seen2.has(i.product_name)) return false;
+                seen2.add(i.product_name);
+                return true;
+              });
+              if (wishlistEl)
+                wishlistEl.textContent = String(unique2.length).padStart(
+                  2,
+                  "0"
+                );
+            } catch {
+              if (wishlistEl) wishlistEl.textContent = "00";
+            }
+          }
+
+          document.body.addEventListener("click", async (e) => {
+            const cartBtn = e.target.closest(".add-to-cart");
+            const wishBtn = e.target.closest(".add-to-wishlist");
+            if (!cartBtn && !wishBtn) return;
+            e.preventDefault();
+
+            const userId = localStorage.getItem("user_id");
+            if (!userId)
+              return showBanner(
+                wishBtn
+                  ? "Please log in to add to wishlist."
+                  : "Please log in to add to cart.",
+                "error"
+              );
+
+            try {
+              const url = cartBtn ? "/api/addcart" : "/api/wishlistpost";
+              const payload = cartBtn
+                ? {
+                    user_id: parseInt(userId, 10),
+                    name: cartBtn.dataset.name,
+                    store: cartBtn.dataset.store,
+                    image: cartBtn.dataset.image,
+                    price: parseFloat(cartBtn.dataset.price) || 0,
+                    price_sale: parseFloat(cartBtn.dataset.price_sale) || 0,
+                    quantity: parseInt(cartBtn.dataset.quantity || "1", 10),
+                  }
+                : {
+                    user_id: parseInt(userId, 10),
+                    product_name: wishBtn.dataset.name,
+                    store: wishBtn.dataset.store,
+                    image: wishBtn.dataset.image,
+                    price: parseFloat(wishBtn.dataset.price) || 0,
+                    price_sale: parseFloat(wishBtn.dataset.price_sale) || 0,
+                    sku: wishBtn.dataset.sku,
+                    stockstatus: wishBtn.dataset.stockstatus,
+                  };
+
+              const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              const text = await res.text();
+              if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
+
+              showBanner(
+                cartBtn
+                  ? "Product added to cart!"
+                  : "Product added to wishlist!",
+                "success"
+              );
+              if (cartBtn) loadSidebarCart();
+              updateCounts();
+            } catch (err) {
+              console.error("Error:", err);
+              showBanner(
+                (cartBtn
+                  ? "Add to cart failed: "
+                  : "Add to wishlist failed: ") + err.message,
+                "error"
+              );
+            }
+          });
+
+          function startWhenReady() {
+            if (
+              document.querySelector("#cat1") &&
+              document.querySelector("#cat2") &&
+              document.querySelector("#cat3")
+            ) {
+              loadFeatureProducts().catch((e) =>
+                console.debug("Initial loadFeatureProducts failed:", e)
+              );
+            } else {
+              setTimeout(startWhenReady, 150);
+            }
+          }
+          startWhenReady();
+          loadSidebarCart().catch((e) =>
+            console.debug("Initial loadSidebarCart failed:", e)
+          );
+          updateCounts().catch((e) =>
+            console.debug("Initial updateCounts failed:", e)
+          );
+          setInterval(updateCounts, 5000);
+        });
+      </script>
+
+      <div
+        id="image-lightbox"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.9);
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+          flex-direction: column;
+        "
+      >
+        <div
+          style="
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+          "
+        >
+          <button
+            id="lightbox-prev"
+            style="
+              position: absolute;
+              left: 20px;
+              top: 50%;
+              transform: translateY(-50%);
+              font-size: 22px;
+              color: white;
+              background: none;
+              border: none;
+              cursor: pointer;
+            "
+          >
+            <i class="fas fa-play" style="transform: rotate(180deg)"></i>
+          </button>
+
+          <div style="position: relative; display: inline-block">
+            <img
+              id="lightbox-image"
+              src=""
+              loading="lazy"
+              alt="Product"
+              style="
+                width: 336px;
+                height: 400px;
+                object-fit: contain;
+                border-radius: 4px;
+              "
+            />
+
+            <div
+              id="lightbox-counter"
+              style="
+                position: absolute;
+                bottom: 0px;
+                right: -2px;
+                color: #fff;
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-size: 14px;
+              "
+            >
+              1 of 0
+            </div>
+
+            <button
+              id="lightbox-close"
+              style="
+                position: absolute;
+                top: 0;
+                right: -8px;
+                font-size: 36px;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                z-index: 10;
+              "
+            >
+              ×
+            </button>
+          </div>
+
+          <button
+            id="lightbox-next"
+            style="
+              position: absolute;
+              right: 20px;
+              top: 50%;
+              transform: translateY(-50%);
+              font-size: 22px;
+              color: white;
+              background: none;
+              border: none;
+              cursor: pointer;
+            "
+          >
+            <i class="fas fa-play"></i>
+          </button>
+        </div>
+      </div>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const imageLightbox = document.getElementById("image-lightbox");
+          const lightboxImg = document.getElementById("lightbox-image");
+          const counterEl = document.getElementById("lightbox-counter");
+          const btnPrev = document.getElementById("lightbox-prev");
+          const btnNext = document.getElementById("lightbox-next");
+          const btnClose = document.getElementById("lightbox-close");
+
+          let imageUrls = [];
+          let currentIndex = 0;
+
+          function collectImageUrls() {
+            imageUrls = Array.from(document.querySelectorAll(".img-popup"))
+              .map((a) => a.dataset.img)
+              .filter(Boolean);
+          }
+
+          function showLightbox(idx) {
+            if (!imageUrls.length) return;
+            currentIndex =
+              ((idx % imageUrls.length) + imageUrls.length) % imageUrls.length;
+            lightboxImg.src = imageUrls[currentIndex];
+            counterEl.textContent = `${currentIndex + 1} of ${
+              imageUrls.length
+            }`;
+            imageLightbox.style.display = "flex";
+            window.scrollTo({ top: 0, behavior: "instant" });
+          }
+
+          function closeLightbox() {
+            imageLightbox.style.display = "none";
+            lightboxImg.src = "";
+          }
+
+          document.body.addEventListener("click", (e) => {
+            const a = e.target.closest(".img-popup");
+            if (!a) return;
+            e.preventDefault();
+            collectImageUrls();
+
+            const img = a.dataset.img || a.getAttribute("href") || "";
+            let idx = imageUrls.indexOf(img);
+            if (idx === -1) {
+              if (img) {
+                imageUrls.push(img);
+                idx = imageUrls.length - 1;
+              } else {
+                return;
+              }
+            }
+            showLightbox(idx);
+          });
+
+          window.addEventListener("keydown", (e) => {
+            if (imageLightbox.style.display !== "flex") return;
+            if (e.key === "Escape") closeLightbox();
+            if (e.key === "ArrowLeft") showLightbox(currentIndex - 1);
+            if (e.key === "ArrowRight") showLightbox(currentIndex + 1);
+          });
+
+          if (btnPrev)
+            btnPrev.addEventListener("click", () =>
+              showLightbox(currentIndex - 1)
+            );
+          if (btnNext)
+            btnNext.addEventListener("click", () =>
+              showLightbox(currentIndex + 1)
+            );
+          if (btnClose) btnClose.addEventListener("click", closeLightbox);
+
+          const watchTarget =
+            document.querySelector(".shop-page-wrapper .row") || document.body;
+          const mo = new MutationObserver(() => {
+            setTimeout(collectImageUrls, 50);
+          });
+          mo.observe(watchTarget, { childList: true, subtree: true });
+
+          collectImageUrls();
+        });
+      </script>
+
+      <section class="work-processing-section pt-30 pb-90">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12">
+              <div
+                class="section-title text-center mb-60"
+                data-aos="fade-up"
+                data-aos-delay="10"
+                data-aos-duration="800"
+              >
+                <div class="sub-heading d-inline-flex align-items-center">
+                  <i class="flaticon-sparkler"></i>
+                  <span class="sub-title">Work Processing</span>
+                  <i class="flaticon-sparkler"></i>
+                </div>
+                <h2>How it Work processing</h2>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xl-3 col-sm-6">
+              <div
+                class="iconic-box-item style-two mb-40"
+                data-aos="fade-up"
+                data-aos-duration="1000"
+              >
+                <div class="sn-number">01</div>
+                <div class="icon">
+                  <i class="flaticon-searching"></i>
+                </div>
+                <div class="content">
+                  <h3 class="feature-title1">Browsing & Choosing</h3>
+                  <p>
+                    This is where customers visit your online store and browse
+                    your products.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+              <div
+                class="iconic-box-item style-two mb-40"
+                data-aos="fade-up"
+                data-aos-duration="1200"
+              >
+                <div class="sn-number">02</div>
+                <div class="icon">
+                  <i class="flaticon-payment-method"></i>
+                </div>
+                <div class="content">
+                  <h3 class="feature-title1">Checkout & Payment</h3>
+                  <p>
+                    Once they have picked their items, customers proceed to
+                    checkout.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+              <div
+                class="iconic-box-item style-two mb-40"
+                data-aos="fade-up"
+                data-aos-duration="1400"
+              >
+                <div class="sn-number">03</div>
+                <div class="icon">
+                  <i class="flaticon-currency"></i>
+                </div>
+                <div class="content">
+                  <h3 class="feature-title1">Order Fulfillment</h3>
+                  <p>
+                    After the order is placed, it's sent to your fulfillment
+                    team.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+              <div
+                class="iconic-box-item style-two mb-40"
+                data-aos="fade-up"
+                data-aos-duration="1600"
+              >
+                <div class="sn-number">04</div>
+                <div class="icon">
+                  <i class="flaticon-delivery"></i>
+                </div>
+                <div class="content">
+                  <h3 class="feature-title1">Delivery to Customer</h3>
+                  <p>
+                    The packed order is then sent off with a shipping carrier
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="best-deal" class="best-deal-section">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12">
+              <div
+                class="offer-deal-wrapper bg_cover"
+                data-aos="fade-up"
+                data-aos-duration="1400"
+                style="background-image: url(assets/images/bg/deal-bg-1.png)"
+              >
+                <div class="deal-img deal-week">
+                  <span>
+                    <img
+                      src="assets/images/banner/deal-1.png"
+                      alt="Deal Image"
+                      loading="lazy"
+                    />
+                  </span>
+                </div>
+                <div class="deal-content">
+                  <span class="sub-heading">
+                    <i class="fas fa-tags"></i>Deal of the Week
+                  </span>
+                  <h2>
+                    Hurry Up! Offer ends in. Get <span>UP TO 80% OFF</span>
+                  </h2>
+
+                  <div
+                    class="simply-countdown mb-60"
+                    id="flashsale-countdown"
+                  ></div>
+
+                  <div class="shop-button">
+                    <a href="/shops" class="theme-btn style-one">Shop Now</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="testimonial-section">
+        <div
+          class="testimonial-wrapper overflow-x-hidden pt-190 pb-90 white-bg"
+        >
+          <div class="shape svg-shape1">
+            <img
+              src="assets/images/testimonial/tl-svgBottom.svg"
+              alt="svg shape"
+              style="width: auto; height: auto; max-width: 100%"
+              loading="lazy"
+            />
+          </div>
+
+          <div class="shape svg-shape2">
+            <img
+              src="assets/images/testimonial/tl-svgBottom.svg"
+              alt="svg shape"
+              style="width: auto; height: auto; max-width: 100%"
+              loading="lazy"
+            />
+          </div>
+          <div class="container">
+            <div class="row">
+              <div class="col-lg-4">
+                <div
+                  class="section-content-box mb-40"
+                  data-aos="fade-right"
+                  data-aos-delay="30"
+                  data-aos-duration="800"
+                >
+                  <div class="section-title mb-50">
+                    <h2>What Our Clients Say About Us</h2>
+                  </div>
+                  <div class="testimonial-arrows style-one"></div>
+                </div>
+              </div>
+
+              <div class="col-lg-8">
+                <div
+                  class="testimonial-slider-one"
+                  data-aos="fade-left"
+                  data-aos-delay="50"
+                  data-aos-duration="1000"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const BASE_IMAGE_URL = "/api/uploads/";
+          const sliderContainer = document.querySelector(
+            ".testimonial-slider-one"
+          );
+          if (!sliderContainer) return;
+
+          const FOCUSABLE_SELECTOR =
+            'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, [tabindex], [contenteditable="true"]';
+
+          function createTestimonialItem(item) {
+            const wrap = document.createElement("div");
+            wrap.className = "testimonial-item style-one mb-40";
+
+            const content = document.createElement("div");
+            content.className = "testimonial-content";
+
+            const p = document.createElement("p");
+            p.innerHTML = item.content || "";
+            content.appendChild(p);
+
+            const authorQuote = document.createElement("div");
+            authorQuote.className =
+              "author-quote-item d-flex justify-content-between align-items-center";
+
+            const authorItem = document.createElement("div");
+            authorItem.className = "author-item";
+
+            const authorThumb = document.createElement("div");
+            authorThumb.className = "author-thumb";
+            const img = document.createElement("img");
+            img.alt = item.name ? item.name + " photo" : "author image";
+            img.src = item.image
+              ? BASE_IMAGE_URL + item.image
+              : BASE_IMAGE_URL + "author-1.png";
+            img.style.width = "auto";
+            img.style.height = "auto";
+            img.loading = "lazy";
+            authorThumb.appendChild(img);
+
+            const authorInfo = document.createElement("div");
+            authorInfo.className = "author-info";
+            const h3 = document.createElement("h3");
+            h3.textContent = item.name || "";
+            h3.style.fontSize = "20px";
+            h3.style.lineHeight = "35px";
+            authorInfo.appendChild(h3);
+
+            const ul = document.createElement("ul");
+            ul.className = "ratings rating5";
+            for (let i = 0; i < 5; i++) {
+              const li = document.createElement("li");
+              li.innerHTML = '<i class="fas fa-star" aria-hidden="true"></i>';
+              ul.appendChild(li);
+            }
+            authorInfo.appendChild(ul);
+
+            authorItem.appendChild(authorThumb);
+            authorItem.appendChild(authorInfo);
+
+            const quoteIcon = document.createElement("div");
+            quoteIcon.className = "quote-icon";
+            quoteIcon.innerHTML =
+              '<i class="flaticon flaticon-right-quote" aria-hidden="true"></i>';
+
+            authorQuote.appendChild(authorItem);
+            authorQuote.appendChild(quoteIcon);
+
+            content.appendChild(authorQuote);
+            wrap.appendChild(content);
+
+            wrap.querySelectorAll(FOCUSABLE_SELECTOR).forEach((el) => {
+              if (!el.hasAttribute("data-prev-tabindex")) {
+                const prev = el.getAttribute("tabindex");
+                el.setAttribute(
+                  "data-prev-tabindex",
+                  prev === null ? "none" : prev
+                );
+              }
+              el.setAttribute("tabindex", "-1");
+            });
+
+            if (!wrap.hasAttribute("data-prev-tabindex")) {
+              const prev = wrap.getAttribute("tabindex");
+              wrap.setAttribute(
+                "data-prev-tabindex",
+                prev === null ? "none" : prev
+              );
+            }
+            wrap.setAttribute("tabindex", "-1");
+
+            return wrap;
+          }
+
+          function makeNonFocusable(el) {
+            if (!el) return;
+            if (!el.hasAttribute("data-prev-tabindex")) {
+              const prev = el.getAttribute("tabindex");
+              el.setAttribute(
+                "data-prev-tabindex",
+                prev === null ? "none" : prev
+              );
+            }
+            el.setAttribute("tabindex", "-1");
+          }
+
+          function restoreFocusable(el) {
+            if (!el) return;
+            const prev = el.getAttribute("data-prev-tabindex");
+            if (prev === null) {
+              if (el.getAttribute("tabindex") === "-1")
+                el.removeAttribute("tabindex");
+            } else {
+              if (prev === "none") el.removeAttribute("tabindex");
+              else el.setAttribute("tabindex", prev);
+              el.removeAttribute("data-prev-tabindex");
+            }
+          }
+
+          function syncSlidesFocus() {
+            const slides = sliderContainer.querySelectorAll(
+              ".slick-slide, .testimonial-item"
+            );
+            slides.forEach((slide) => {
+              const ariaHidden = slide.getAttribute("aria-hidden");
+              const isHidden = ariaHidden === "true";
+              if (isHidden) {
+                makeNonFocusable(slide);
+              } else {
+                restoreFocusable(slide);
+              }
+
+              const focusables = slide.querySelectorAll(FOCUSABLE_SELECTOR);
+              focusables.forEach((el) => {
+                if (isHidden) makeNonFocusable(el);
+                else restoreFocusable(el);
+              });
+            });
+          }
+
+          function observeSliderChanges() {
+            const observer = new MutationObserver((mutations) => {
+              let shouldSync = false;
+              for (const m of mutations) {
+                if (m.type === "attributes") {
+                  if (
+                    m.attributeName === "aria-hidden" ||
+                    m.attributeName === "class" ||
+                    m.attributeName === "tabindex"
+                  ) {
+                    shouldSync = true;
+                    break;
+                  }
+                } else if (m.type === "childList") {
+                  shouldSync = true;
+                  break;
+                }
+              }
+              if (shouldSync) {
+                if (window.__testimonial_sync_timeout)
+                  clearTimeout(window.__testimonial_sync_timeout);
+                window.__testimonial_sync_timeout = setTimeout(() => {
+                  syncSlidesFocus();
+                }, 30);
+              }
+            });
+
+            observer.observe(sliderContainer, {
+              attributes: true,
+              childList: true,
+              subtree: true,
+              attributeFilter: ["aria-hidden", "class", "tabindex"],
+            });
+
+            return observer;
+          }
+
+          fetch("/api/gettestimonials")
+            .then((res) => {
+              if (!res.ok) throw new Error("Network response was not ok");
+              return res.json();
+            })
+            .then((data) => {
+              if (!Array.isArray(data)) return;
+
+              sliderContainer.innerHTML = "";
+
+              const visible = data.filter(
+                (t) => String(t.status || "").toLowerCase() === "published"
+              );
+              const toRender = visible.length ? visible : data;
+
+              toRender.forEach((t) =>
+                sliderContainer.appendChild(createTestimonialItem(t))
+              );
+
+              try {
+                if (typeof initTestimonialSlider === "function") {
+                  initTestimonialSlider();
+                } else if (window.jQuery && jQuery.fn && jQuery.fn.slick) {
+                  const $el = jQuery(".testimonial-slider-one");
+                  if ($el.hasClass("slick-initialized")) $el.slick("refresh");
+                  else $el.slick();
+                } else if (window.Swiper && sliderContainer.swiper) {
+                  sliderContainer.swiper.update();
+                }
+              } catch (err) {
+                console.warn("Could not refresh testimonial slider:", err);
+              }
+
+              setTimeout(() => {
+                syncSlidesFocus();
+                observeSliderChanges();
+              }, 50);
+
+              if (window.jQuery && jQuery.fn && jQuery.fn.slick) {
+                const $el = jQuery(".testimonial-slider-one");
+                $el.on("afterChange", function (event, slick, currentSlide) {
+                  setTimeout(syncSlidesFocus, 10);
+                });
+              }
+            })
+            .catch((err) => console.error("Failed to load testimonials:", err));
+        });
+      </script>
+
+      <section class="blogs-section pt-125 pb-95">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12">
+              <div
+                class="section-title text-center mb-60"
+                data-aos="fade-up"
+                data-aos-duration="1000"
+              >
+                <div class="sub-heading d-inline-flex align-items-center">
+                  <i class="flaticon-sparkler"></i>
+                  <span class="sub-title">Our Blogs</span>
+                  <i class="flaticon-sparkler"></i>
+                </div>
+                <h2>Explore our Articles</h2>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-6">
+              <div
+                class="blog-post-item style-one mb-25 injected-large"
+                data-aos="fade-up"
+                data-aos-duration="1200"
+              >
+                <div class="post-thumbnail">
+                  <img
+                    src="assets/images/blog/blog-big-1.png"
+                    alt="Post Thumbnail"
+                    loading="lazy"
+                  />
+                </div>
+                <div class="post-content">
+                  <h3 class="title">
+                    <a href="blog-details.html">Post Title</a>
+                  </h3>
+                  <p>Post description goes here...</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="row" id="small-posts-container">
+                <div class="col-sm-6">
+                  <div
+                    class="blog-post-item style-two mb-25 injected-small"
+                    data-aos="fade-up"
+                    data-aos-duration="1400"
+                  >
+                    <div class="post-thumbnail">
+                      <img
+                        src="assets/images/blog/blog-sm-1.png"
+                        alt="Post Thumbnail"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div class="post-content">
+                      <h3 class="title">
+                        <a href="blog-details.html">Post Title</a>
+                      </h3>
+                      <div class="post-meta">
+                        <span><a href="#">Category</a></span>
+                        <span><a href="#">Date</a></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="newsletter-section pb-95">
+        <div class="container">
+          <div
+            class="newsletter-wrapper white-bg p-r z-1"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+          >
+            <div class="newsletter-shape pattern-one">
+              <span
+                ><img
+                  src="assets/images/newsletter/pattern-1.png"
+                  alt="Pattern Shape"
+                  loading="lazy"
+              /></span>
+            </div>
+            <div class="newsletter-shape pattern-two">
+              <span
+                ><img
+                  src="assets/images/newsletter/pattern-2.png"
+                  alt="Pattern Shape"
+                  loading="lazy"
+              /></span>
+            </div>
+            <div class="newsletter-shape shape-one">
+              <span
+                ><img
+                  src="assets/images/newsletter/shape-1.png"
+                  alt="Shape"
+                  loading="lazy"
+              /></span>
+            </div>
+
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="newsletter-content-box">
+                  <span class="sub-text">Our Newsletter</span>
+                  <h3>
+                    Get weekly update. Sign up and get up to
+                    <span>20% off</span> your first purchase
+                  </h3>
+                  <form>
+                    <div class="form-group">
+                      <input
+                        type="email"
+                        class="form_control"
+                        placeholder="Write your Email Address"
+                        name="email"
+                        required
+                      />
+                      <button class="theme-btn style-one" type="submit">
+                        Subscribe
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <div class="newsletter-image">
+                  <img
+                    src="https://avatars.mds.yandex.net/i?id=802770c3379c394673fcc33bea11d6b7952ceffd-4012107-images-thumbs&n=13"
+                    alt="Newsletter Image"
+                    loading="lazy"
+                    width="480"
+                    height="320"
+                    loading="lazy"
+                    decoding="async"
+                    style="max-width: 100%; height: auto; display: block"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const form = document.querySelector(".newsletter-section form");
+        if (!form) return;
+
+        function showBanner(msg, type = "success") {
+          const b = document.createElement("div");
+          b.className = `banner ${type}`;
+          b.textContent = msg;
+          Object.assign(b.style, {
+            position: "fixed",
+            top: "10px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "10px 20px",
+            background: type === "success" ? "#4caf50" : "#f44336",
+            color: "#fff",
+            borderRadius: "4px",
+            zIndex: 9999,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+          });
+          document.body.appendChild(b);
+          setTimeout(() => b.remove(), 3000);
+        }
+
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const input = form.querySelector('input[name="email"]');
+          const email = input.value.trim();
+          if (!email) {
+            showBanner("Please enter a valid email.", "error");
+            return;
+          }
+
+          try {
+            const res = await fetch("/api/newsletterpost", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email }),
+            });
+            const text = await res.text();
+            if (res.ok) {
+              showBanner("Subscribed successfully!", "success");
+              form.reset();
+            } else {
+              showBanner(text || "Subscription failed.", "error");
+            }
+          } catch (err) {
+            console.error("Newsletter error:", err);
+            showBanner("Network error, please try again.", "error");
+          }
+        });
+      });
+    </script>
+
+    <footer class="footer-main">
+      <div class="footer-bg-wrapper gray-light-bg pt-0">
+        <div class="footer-shape shape-one">
+          <span
+            ><img
+              src="assets/images/footer/shape-1.png"
+              alt="shape"
+              loading="lazy"
+          /></span>
+        </div>
+        <div class="footer-widget-area pb-80">
+          <div class="container">
+            <div class="row">
+              <div class="col-xl-3 col-sm-6">
+                <div
+                  class="footer-widget about-company-widget mb-40"
+                  data-aos="fade-up"
+                  data-aos-delay="10"
+                  data-aos-duration="1000"
+                >
+                  <div class="widget-content">
+                    <a href="index.html" class="footer-logo"
+                      ><img
+                        src="assets/images/logo/logo-main.png"
+                        alt="Brand Logo"
+                        loading="lazy"
+                    /></a>
+
+                    <p>
+                      Pesco is an exciting International brand we provide high
+                      quality cloths
+                    </p>
+                    <ul class="ct-info-list mb-30">
+                      <li>
+                        <i class="fas fa-envelope"></i>
+                        <a href="mailto:info@mydomain.com">info@mydomain.com</a>
+                      </li>
+                      <li>
+                        <i class="fas fa-phone-alt"></i>
+                        <a href="mailto:info@mydomain.com">info@mydomain.com</a>
+                      </li>
+                    </ul>
+                    <ul
+                      class="social-link"
+                      aria-label="Find us on social media"
+                    >
+                      <li class="social-label me-2">Find Us:</li>
+                      <li>
+                        <a
+                          href="https://www.facebook.com/"
+                          target="_blank"
+                          aria-label="Visit us on Facebook"
+                        >
+                          <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="https://www.instagram.com/"
+                          target="_blank"
+                          aria-label="Visit us on Instagram"
+                        >
+                          <i class="fab fa-instagram" aria-hidden="true"></i>
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="https://in.linkedin.com/"
+                          target="_blank"
+                          aria-label="Visit us on LinkedIn"
+                        >
+                          <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href="https://x.com/"
+                          target="_blank"
+                          aria-label="Visit us on X (Twitter)"
+                        >
+                          <i class="fab fa-twitter" aria-hidden="true"></i>
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6 col-sm-6">
+                <div
+                  class="footer-widget footer-nav-widget mb-40"
+                  data-aos="fade-up"
+                  data-aos-delay="15"
+                  data-aos-duration="1200"
+                >
+                  <div class="widget-content">
+                    <h4 class="widget-title">Customer Services</h4>
+                    <ul class="widget-menu">
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="shops.html">Collections & Delivery</a>
+                      </li>
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="shops.html">Returns & Refunds</a>
+                      </li>
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="shops.html">Terms & Conditions</a>
+                      </li>
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="shops.html">Delivery Return</a>
+                      </li>
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="shops.html">Store Locations</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl-3 col-md-6 col-sm-6">
+                <div
+                  class="footer-widget footer-nav-widget mb-40"
+                  data-aos="fade-up"
+                  data-aos-delay="20"
+                  data-aos-duration="1400"
+                >
+                  <div class="widget-content">
+                    <h4 class="widget-title">Quick Link</h4>
+                    <ul class="widget-menu">
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="shops.html">Privacy Policy</a>
+                      </li>
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="shops.html">Terms Of Use</a>
+                      </li>
+
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="faq.html">FAQ</a>
+                      </li>
+
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="contact.html">Contact</a>
+                      </li>
+
+                      <li>
+                        <img
+                          src="assets/images/icon/star-3.svg"
+                          alt="star icon"
+                          loading="lazy"
+                        /><a href="contact.html">Login / Register</a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xl-3 col-sm-6">
+                <div
+                  class="footer-widget footer-recent-post-widget"
+                  data-aos="fade-up"
+                  data-aos-delay="25"
+                  data-aos-duration="1600"
+                >
+                  <h4 class="widget-title">Recent Post</h4>
+                  <div class="widget-content" id="recent-posts-container">
+                    <div class="build-pagination d-none">
+                      <ul></ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="copyright-area">
+          <div class="container">
+            <div class="row align-items-center">
+              <div class="col-lg-6">
+                <div class="copyright-text">
+                  <p>
+                    &copy; 2025. All rights reserved by <span>Pixelfit</span>
+                  </p>
+                </div>
+
+                <script>
+                  document.addEventListener("DOMContentLoaded", () => {
+                    const p = document.querySelector(".copyright-text p");
+                    if (!p) return;
+                    p.innerHTML = p.innerHTML.replace(
+                      /\b\d{4}\b/,
+                      new Date().getFullYear()
+                    );
+                  });
+                </script>
+              </div>
+              <div class="col-lg-6">
+                <div class="payment-method text-lg-end">
+                  <a href="index.html"
+                    ><img
+                      src="assets/images/footer/payment-method.png"
+                      alt="payment-method"
+                      loading="lazy"
+                  /></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const API = "/api/blogpostdata";
+        const UPLOADS_BASE = "/api/uploads/";
+
+        const slugify = (s) =>
+          String(s || "")
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, "")
+            .replace(/\s+/g, "-");
+
+        const imageSrc = (img) => {
+          const str = String(img).trim();
+          if (/^https?:\/\//i.test(str)) return str;
+          if (str.startsWith("/")) return str;
+          return UPLOADS_BASE + encodeURIComponent(str);
+        };
+
+        const formatDate = (iso) => {
+          if (!iso) return "";
+          try {
+            return new Date(iso).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+          } catch (e) {
+            return iso;
+          }
+        };
+
+        const escapeHtml = (str) =>
+          String(str || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        const css = `
+          .injected-large .post-thumbnail img { width:700px !important; height:380px !important; object-fit:cover !important; display:block; }
+          .injected-small .post-thumbnail img { width:330px !important; height:200px !important; object-fit:cover !important; display:block; }
+          .injected-style-four .post-thumbnail img { width:342px !important; height:223px !important; object-fit:cover !important; display:block; }
+          @media (max-width:768px) {
+            .injected-small .post-thumbnail img, .injected-style-four .post-thumbnail img { width:100% !important; height:223px !important; }
+            .injected-large .post-thumbnail img { height:380px !important; }
+          }
+        `;
+        try {
+          const style = document.createElement("style");
+          style.type = "text/css";
+          style.appendChild(document.createTextNode(css));
+          document.head.appendChild(style);
+        } catch (e) {
+          console.warn("Could not inject CSS", e);
+        }
+
+        const leftCol = document.querySelector(
+          ".blogs-section .row > .col-lg-6"
+        );
+        const rightGrid = document.querySelector(
+          ".blogs-section .row > .col-lg-6 + .col-lg-6 .row"
+        );
+        const footerContainer = document.querySelector(
+          ".footer-recent-post-widget .widget-content"
+        );
+
+        if (!leftCol || !rightGrid)
+          console.warn("Blog containers not found, skipping blog injection.");
+        if (!footerContainer)
+          console.warn(
+            "Footer container not found, skipping recent posts injection."
+          );
+
+        fetch(API)
+          .then((res) => {
+            if (!res.ok)
+              throw new Error("Network response was not ok: " + res.status);
+            return res.json();
+          })
+          .then((data) => {
+            if (!Array.isArray(data) || data.length === 0)
+              throw new Error("No blog data returned.");
+
+            const posts = data.slice();
+            posts.forEach((p) => {
+              p._dateObj = p.date ? new Date(p.date) : new Date(0);
+            });
+            posts.sort((a, b) => b._dateObj - a._dateObj);
+
+            if (leftCol && rightGrid) {
+              let mainIndex = posts.findIndex(
+                (p) => String(p.feature).toLowerCase() === "yes"
+              );
+              if (mainIndex === -1) mainIndex = 0;
+              const mainPost = posts.splice(mainIndex, 1)[0];
+
+              const smallPosts = posts.slice(0, 4);
+
+              leftCol.innerHTML = `
+                <div class="blog-post-item style-one mb-25 injected-large" data-aos="fade-up" data-aos-duration="1200">
+                  <div class="post-thumbnail">
+                    <img loading="lazy" src="${imageSrc(
+                      mainPost.image
+                    )}" alt="${escapeHtml(mainPost.name)}">
+                  </div>
+                  <div class="post-content">
+                    <h3 class="title"><a href="/blog-details/${slugify(
+                      mainPost.name
+                    )}">${escapeHtml(mainPost.name)}</a></h3>
+                    <p>${escapeHtml(mainPost.description || "").substring(
+                      0,
+                      250
+                    )}</p>
+                  </div>
+                </div>
+              `;
+
+              const aosStart = 1400;
+              rightGrid.innerHTML = smallPosts
+                .map((post, i) => {
+                  const extraClass =
+                    i === 2 ? "injected-style-four" : "injected-small";
+                  return `
+                  <div class="col-sm-6">
+                    <div class="blog-post-item style-two mb-25 ${extraClass}" data-aos="fade-up" data-aos-duration="${
+                    aosStart + i * 200
+                  }">
+                      <div class="post-thumbnail">
+                        <img src="${imageSrc(post.image)}" alt="${escapeHtml(
+                    post.name
+                  )}" loading="lazy">
+                      </div>
+                      <div class="post-content">
+                        <h3 class="title"><a href="/blog-details/${slugify(
+                          post.name
+                        )}">${escapeHtml(post.name)}</a></h3>
+                        <div class="post-meta">
+                          <span><a href="/blog-details/${slugify(
+                            post.name
+                          )}">${escapeHtml(post.categories || "")}</a></span>
+                          <span><a href="/blog-details/${slugify(
+                            post.name
+                          )}">${formatDate(post.date)}</a></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                })
+                .join("");
+            }
+
+            if (footerContainer) {
+              const top3 = posts.slice(0, 3);
+              footerContainer.innerHTML = "";
+              top3.forEach((post) => {
+                const postHTML = `
+                  <div class="recent-post-item d-flex flex-row flex-nowrap align-items-center mb-3">
+                    <div class="thumb" style="width:64px; height:64px; overflow:hidden; margin-right:10px;">
+                      <a href="/blog-details/${slugify(post.name)}">
+                        <img src="${imageSrc(post.image)}" alt="${
+                  post.name
+                }" loading="lazy" style="width:64px; height:64px; object-fit:cover;" loading="lazy">
+                      </a>
+                    </div>
+                    <div class="content">
+                      <h4 style="margin:0; line-height:1.2;">
+                        <a href="/blog-details/${slugify(post.name)}">${
+                  post.name
+                }</a>
+                      </h4>
+                      <span>
+                        <a href="/blog-details/${slugify(
+                          post.name
+                        )}">${formatDate(post.date)}</a>
+                      </span>
+                    </div>
+                  </div>
+                `;
+                footerContainer.insertAdjacentHTML("beforeend", postHTML);
+              });
+            }
+
+            if (window.AOS && typeof window.AOS.refresh === "function")
+              window.AOS.refresh();
+          })
+          .catch((err) => console.error("Failed to load blog posts:", err));
+      });
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const searchForm = document.querySelector(
+          ".product-search-category form"
+        );
+        const searchInput = searchForm.querySelector('input[type="text"]');
+
+        const dropdown = document.createElement("div");
+        dropdown.className = "header-search-autocomplete";
+        Object.assign(dropdown.style, {
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          right: 0,
+          background: "#fff",
+          border: "1px solid #ddd",
+          zIndex: 1000,
+          maxHeight: "300px",
+          overflowY: "auto",
+          display: "none",
+        });
+        searchForm.style.position = "relative";
+        searchForm.appendChild(dropdown);
+
+        searchForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          window.location.href = "/shops-grid";
+        });
+
+        let timer;
+        searchInput.addEventListener("input", () => {
+          clearTimeout(timer);
+          const q = searchInput.value.trim();
+          if (q.length < 2) {
+            dropdown.style.display = "none";
+            return;
+          }
+          timer = setTimeout(() => {
+            fetch("/api/productpagedata")
+              .then((r) => r.json())
+              .then((products) => {
+                const matches = products
+                  .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
+                  .slice(0, 5);
+
+                if (!matches.length) {
+                  dropdown.innerHTML = `<div style="padding:10px;color:#666">No matching products found at this time.</div>`;
+                } else {
+                  dropdown.innerHTML =
+                    matches
+                      .map((p) => {
+                        const priceHTML = p.price_sale
+                          ? `<strong style="color:#000">${p.price}</strong> <del style="color:#999" class="text-secondary fw-bold ms-2">${p.price_sale}</del>`
+                          : `<strong class="text-secondary fw-bold" style="color:#000">${p.price}</strong>`;
+
+                        return `
+                <div class="autocomplete-item" data-name="${(
+                  p.name || ""
+                ).replace(
+                  /"/g,
+                  "&quot;"
+                )}" style="display:flex;align-items:center;padding:8px;cursor:pointer;border-bottom:1px solid #eee">
+                  <img loading="lazy" src="/api/uploads/${p.image}" 
+                      alt="${(p.name || "").replace(/"/g, "&quot;")}" 
+                      style="width:40px;height:40px;object-fit:cover;margin-right:10px;" loading="lazy">
+                  <div>
+                    <div style="font-weight:600;color:#333" class="text-dark fw-bold">${
+                      p.name
+                    }</div>
+                    <div style="font-size:0.85em;margin-top:4px;">${priceHTML}</div>
+                  </div>
+                </div>
+              `;
+                      })
+                      .join("") +
+                    `<div class="autocomplete-show-all" style="padding:10px;text-align:center;color:#e74c3c;font-weight:600;cursor:pointer">
+                  Show all results
+                </div>`;
+                }
+                dropdown.style.display = "block";
+              })
+              .catch(() => {
+                dropdown.innerHTML = `<div style="padding:10px;color:red;">Error loading results.</div>`;
+                dropdown.style.display = "block";
+              });
+          }, 300);
+        });
+
+        dropdown.addEventListener("click", (e) => {
+          const item = e.target.closest(".autocomplete-item");
+          if (item) {
+            window.location.href = "/shops-grid";
+            return;
+          }
+          if (e.target.closest(".autocomplete-show-all")) {
+            window.location.href = "/shops-grid";
+          }
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!searchForm.contains(e.target)) {
+            dropdown.style.display = "none";
+          }
+        });
+      });
+    </script>
+
+    <div class="site-branding d-lg-none d-block">
+      <a href="index.html" class="brand-logo">
+        <img
+          src="assets/images/logo/logo-main.png"
+          alt="Logo"
+          width="236"
+          height="54"
+          style="width: 157px; height: auto; display: block"
+          loading="lazy"
+        />
+      </a>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const res = await fetch("/api/get-theme-logo");
+          if (!res.ok) throw new Error("Failed to fetch logo data");
+
+          const data = await res.json();
+          const logoUrl = data.logo_url;
+          if (!logoUrl) throw new Error("Logo URL not found in API response");
+
+          const highResLogo = `/api/uploads/${logoUrl}`;
+
+          const logoImgs = [
+            ...document.querySelectorAll(".brand-logo img"),
+            ...document.querySelectorAll(".site-branding .brand-logo img"),
+            ...document.querySelectorAll(".footer-logo img"),
+          ];
+
+          const preload = new Image();
+          preload.onload = () => {
+            logoImgs.forEach((img) => {
+              img.src = highResLogo;
+              img.alt = data.alt_text || "Logo";
+
+              img.removeAttribute("width");
+              img.removeAttribute("height");
+              img.removeAttribute("style");
+              img.removeAttribute("srcset");
+            });
+          };
+
+          preload.onerror = () => {
+            logoImgs.forEach((img) => {
+              img.src = "assets/images/logo/logo-main.png";
+              img.alt = "Logo";
+              img.removeAttribute("width");
+              img.removeAttribute("height");
+              img.removeAttribute("style");
+              img.removeAttribute("srcset");
+            });
+          };
+
+          preload.src = highResLogo;
+        } catch (error) {
+          console.error("Logo load error:", error);
+          const logoImgs = [
+            ...document.querySelectorAll(".brand-logo img"),
+            ...document.querySelectorAll(".site-branding .brand-logo img"),
+            ...document.querySelectorAll(".footer-logo img"),
+          ];
+          logoImgs.forEach((img) => {
+            img.src = "assets/images/logo/logo-main.png";
+            img.alt = "Logo";
+            img.removeAttribute("width");
+            img.removeAttribute("height");
+            img.removeAttribute("style");
+            img.removeAttribute("srcset");
+          });
+        }
+      });
+    </script>
+
+    <div class="back-to-top"><i class="far fa-angle-up"></i></div>
+    <script src="assets/vendor/jquery-3.7.1.min.js" defer></script>
+    <!--  <script src="assets/vendor/popper/popper.min.js" defer></script> -->
+    <script src="assets/vendor/bootstrap/js/bootstrap.min.js" defer></script>
+    <script src="assets/vendor/slick/slick.min.js" defer></script>
+    <!-- <script
+      src="assets/vendor/magnific-popup/dist/jquery.magnific-popup.min.js"
+      defer
+    ></script> -->
+    <script
+      src="assets/vendor/nice-select/js/jquery.nice-select.min.js"
+      defer
+    ></script>
+    <script src="assets/vendor/jquery-ui/jquery-ui.min.js" defer></script>
+    <script src="assets/vendor/simplyCountdown.min.js" defer></script>
+    <script src="assets/vendor/aos/aos.js" defer></script>
+    <script src="assets/js/theme.js" defer></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script> -->
+  </body>
+</html>

@@ -1,0 +1,148 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+
+  position: relative;
+}
+
+.blog-condition {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 576px) {
+  .blog-condition {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 768px) {
+  .blog-condition {
+    width: 100%;
+    max-width: 98%;
+    height: 100%;
+  }
+}
+
+.lorem-condition {
+  color: #232323;
+  font-weight: 700;
+  line-height: 30px;
+  position: relative;
+  left: 0.2rem;
+  font-size: 26px;
+}
+
+.unordered-list {
+  color: #5c727d;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 25px;
+  position: relative;
+  left: 0.3rem;
+}
+
+.rating {
+  position: relative;
+  top: 0.2rem;
+}
+
+.lorem-green {
+  line-height: 1.5rem;
+  list-style: none;
+}
+
+.lorem-green::before {
+  content: "•";
+  color: green;
+  font-size: 2em;
+  margin-right: 0.6rem;
+  position: relative;
+  top: -0.1rem;
+}
+
+.lorem-write {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 767px) and (max-width: 770px) {
+  .lorem-write1 {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.lorem-write:focus {
+  background-color: #e3e4ec;
+}
+
+.review-page {
+  background-color: #f4f4f8;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  height: 22rem;
+}
+
+.save-para {
+  color: #133344;
+  font-weight: 400;
+}
+
+@media (max-width: 576px) {
+  .review-page {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+  .review-page {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .review-page {
+    width: 100%;
+    height: 100%;
+  }
+}
+.control-form {
+  border-left: none;
+  border-right: none;
+  padding: 1rem 1rem;
+  background-color: #f4f4f8;
+}
+
+.pharmacy {
+  position: relative;
+  left: 0.5rem;
+}
+
+.lorem-terms {
+  letter-spacing: 1px;
+  word-spacing: 2px;
+  color: black;
+}
+
+.lorem-terms::marker {
+  color: #d46460;
+  font-weight: bolder;
+}

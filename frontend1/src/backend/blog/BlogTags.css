@@ -1,0 +1,82 @@
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.search-box1 {
+  width: 32px;
+  position: relative;
+  bottom: 0.98rem;
+  cursor: pointer;
+}
+.count-value {
+  font-family: Verdana, Tahoma, sans-serif;
+  position: relative;
+  left: 0.6rem;
+  top: 0.22rem;
+}
+
+.query {
+  width: 100%;
+  max-width: 36rem;
+
+  height: 33rem;
+  background-color: #ffffff;
+  padding: 1rem;
+}
+
+.button-btn {
+  background-color: #0a9a73;
+}
+
+.query {
+  width: 100%;
+  max-width: 36rem;
+  background-color: #ffffff;
+
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .query {
+    padding: 1rem;
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .col-12 {
+    text-align: center;
+  }
+
+  .form-group {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .form-control {
+    width: 100%;
+  }
+
+  button.button-btn {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.bulk {
+  letter-spacing: 2px;
+}
+
+.status-blog {
+  letter-spacing: 2px;
+}
