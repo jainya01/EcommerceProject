@@ -25,6 +25,7 @@ router.use(cookieParser());
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 router.use("/themes", themeRoutes);
+
 router.use(
   "/themes",
   express.static(path.join(__dirname, "../themes"), { extensions: ["html"] })
@@ -118,6 +119,7 @@ router.use(
 const publicVapidKey =
   "BPJVSJMYeYgCD13-Sv8ziP9m6ecOBSc8KfIJ055G9wsCmE80aYWKPEUKkamseWpIkorpD3-Vs3NLBmBLvXEASGI";
 const privateVapidKey = "h2r9X6cwNN1GxczN_e9N2Ggh0Ap3jcrmfBhWmW9xNX8";
+
 webpush.setVapidDetails(
   "mailto:your-email@example.com",
   publicVapidKey,
@@ -192,6 +194,7 @@ function authenticateUser(req, res, next) {
     next();
   });
 }
+
 const verifyUser = (req, res, next) => {
   const token = req.cookies.token;
   if (!token) return res.json({ Error: "You are not authenticated" });
@@ -861,6 +864,7 @@ router.get("/getannounce", (req, res) => {
     }
   });
 });
+
 router.delete("/deleteannoune/:id", (req, res) => {
   const id = req.params.id;
   const sql = "delete from announce where id=?";
@@ -3590,13 +3594,22 @@ router.post("/productpage", upload.single("file"), (req, res) => {
 });
 
 router.get("/productpagedata", (req, res) => {
-  const searchQuery = req.query.search ? req.query.search : "";
-  const sql = "SELECT * FROM products WHERE name LIKE ?";
-  db.query(sql, [`%${searchQuery}%`], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Database query failed" });
-    }
+  const search = req.query.search || "";
+
+  let sql;
+  let params;
+
+  if (!search) {
+    sql = "SELECT * FROM products LIMIT 50";
+    params = [];
+  } else {
+    sql =
+      "SELECT * FROM products WHERE MATCH(name) AGAINST(? IN NATURAL LANGUAGE MODE)";
+    params = [search];
+  }
+
+  db.query(sql, params, (err, result) => {
+    if (err) return res.status(500).json({ error: "Query failed" });
     res.json(result);
   });
 });
@@ -4599,6 +4612,7 @@ router.get("/spceficationdatasomeattribute/:id", (req, res) => {
     }
   });
 });
+
 router.put("/spceficationupdateattribute/:id", (req, res) => {
   let id = req.params.id;
   const data = req.body;
